@@ -38,6 +38,76 @@ def extract_word_vectors(corpus):
 
     return [X, y, vocab_len, tokenizer]
 
+def extract_word_vectors2(corpus, num_sent):
+    '''Use bigrams as input (not completely working at the moment)'''
+    sents = gutenberg.sents('austen-emma.txt')[:num_sent]
+    text = ''
+
+    for s in sents:
+        for w in s:
+            text += ' ' + w
+
+    # Extract one word and the following one
+    tokenizer = Tokenizer()
+    # Extracts sequences of text
+    tokenizer.fit_on_texts([text])
+    # Convert sequences of text to sequences of ints
+    int_enc = tokenizer.texts_to_sequences([text])[0]
+
+    # Store vocabulary length for embedding layer (+ 1 to encode longest word)
+    vocab_len = len(tokenizer.word_index) + 1
+
+    # Create word-word sequences
+    sequences = list()
+    for i in range(1, len(int_enc)):
+        tmp = int_enc[i - 1:i + 1]
+        sequences.append(tmp)
+
+    # Split into first and second element of sequence
+    sequences = array(sequences)
+    X = sequences[:, 0]
+    y = sequences[:, 1]
+
+    # Use Keras to_categorical() function to one-hot encode the output / second word
+    y = to_categorical(y, num_classes=vocab_len)
+
+    return [X, y, vocab_len, tokenizer]
+
+
+def extract_bigram_vectors(corpus, num_sent):
+    '''Read in the specified number of sentences from the corpus'''
+    sents = gutenberg.sents('austen-emma.txt')[:num_sent]
+    text = ''
+
+    for s in sents:
+        for w in s:
+            text += ' ' + w
+
+    # Extract one word and the following one
+    tokenizer = Tokenizer()
+    # Extracts sequences of text
+    tokenizer.fit_on_texts([text])
+    # Convert sequences of text to sequences of ints
+    int_enc = tokenizer.texts_to_sequences([text])[0]
+
+    # Store vocabulary length for embedding layer (+ 1 to encode longest word)
+    vocab_len = len(tokenizer.word_index) + 1
+
+    sequences = list()
+    # Create bi-gram - one-gram sequences
+    for i in range(2, len(int_enc)):
+        tmp = int_enc[i - 2:i + 1]
+        sequences.append(tmp)
+
+    sequences2 = array(sequences)
+    X = sequences2[:, :-1]
+    y = sequences2[:, -1]
+
+    # Use Keras to_categorical() function to one-hot encode the output / second word
+    y = to_categorical(y, num_classes=vocab_len)
+
+    return [X, y, vocab_len, tokenizer]
+
 def model(X, y, vocab_len):
     # Create the actual model
     # Embedding layer to learn the word embeddings from the input; input_length=1 because 1 word at a time is passed to NN
@@ -76,7 +146,7 @@ def gen_sent(start, model, tokenizer):
     return sentence
 
 # Test
-word_vec = extract_word_vectors('austen-emma.txt')
+word_vec = extract_word_vectors2('austen-emma.txt', 500)
 X = word_vec[0]
 y = word_vec[1]
 vocab_len = word_vec[2]

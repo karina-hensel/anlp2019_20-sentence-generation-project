@@ -50,6 +50,7 @@ def char_model(text, seq_len, str_len):
     seq_len = chars['seq_len']
     c2i = chars['char_index']
     i2c = chars['index_char']
+    seq = chars['sequences']
 
     # Create the actual model
     model = Sequential()

@@ -4,6 +4,7 @@ from nltk.corpus import gutenberg
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.utils import to_categorical
+from pickle import dump, load
 
 
 def extract_text(corpus):
@@ -127,7 +128,7 @@ def extract_characters(text, seq_len, str_len):
     vocabulary length, sequence length, mappings from characters to index and from index to characters"""
 
     # Dictionary to return
-    char_info = dict.fromkeys(['X', 'Y', 'num_chars', 'max_len', 'seq_len', 'char_index', 'index_char'])
+    char_info = dict.fromkeys(['X', 'Y', 'num_chars', 'max_len', 'seq_len', 'char_index', 'index_char', 'sequences'])
 
     # Only use part of text if specified
     if str_len != None:
@@ -176,6 +177,7 @@ def extract_characters(text, seq_len, str_len):
     char_info['seq_len'] = seq_len
     char_info['char_index'] = char_index
     char_info['index_char'] = index_char
+    char_info['sequences'] = sequ
 
     return char_info
 
@@ -252,3 +254,16 @@ def gen_sent_from_chars(start, num_chars, seq_len, model, char_ind, ind_char, li
             break
 
     return text
+
+def save_to_file(corpus, sequences, mapping):
+    # Write sequences to file
+    f = open(corpus + '-seq.txt', 'w')
+    for s in sequences:
+        f.write(s+'\n')
+
+    # Save character-index mapping as pickle file
+    dump(mapping, open(corpus + '-char-to-ind.pkl', 'wb'))
+
+#t = extract_characters(extract_text_gutenberg('austen-emma.txt'), 10, 10000)
+
+#save_to_file('austen-emma', t['sequences'], t['char_index'])

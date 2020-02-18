@@ -1,10 +1,11 @@
-"""Extract n-grams of different sizes from a corpus and format them"""
+"""Extract n-grams of different sizes from a corpus, format them and save relevant ressources to files"""
 from keras_preprocessing.sequence import pad_sequences
 from nltk.corpus import gutenberg
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.utils import to_categorical
 from pickle import dump, load
+import random
 
 
 def extract_text(corpus):
@@ -24,14 +25,16 @@ def extract_text_gutenberg(corpus):
     :param corpus: file id
     :returns text as string"""
 
-    text = gutenberg.raw(corpus).replace('.', ' . <end> ')
-    text = text.replace('?', ' ? <end> ')
-    text = text.replace('!', ' ! <end> ')
-
+    text = gutenberg.raw(corpus).replace('. ', ' . <end> ')
+    text = text.replace('? ', ' ? <end> ')
+    text = text.replace('! ', ' ! <end> ')
+    text = text.replace('?"', ' ? <end> ')
+    text = text.replace('!"', ' ! <end> ')
+    text = text.replace('."', ' ? <end> ')
     return text
 
-def extract_words(text, str_len=None):
-    """Extract text from a file as a string (old; use extract_ngrams instead)
+'''def extract_words(text, str_len=None):
+    """Extract text from a file as a string (old; use extract_ngrams with n=1 instead)
     :param text: text as string
     :param str_len (optional): only use substring
     :returns list with indexed input words, correct successive words (one-hot vectors),
@@ -65,7 +68,7 @@ def extract_words(text, str_len=None):
     # Use Keras to_categorical() function to one-hot encode the output / second word
     y = to_categorical(y, num_classes=vocab_len)
 
-    return [X, y, vocab_len, tokenizer, max_len]
+    return [X, y, vocab_len, tokenizer, max_len]'''
 
 
 def extract_ngrams(text, n, str_len=None):
@@ -84,7 +87,7 @@ def extract_ngrams(text, n, str_len=None):
         text = text[:str_len]
 
     # Tokenizer does not filter for 'end-of-sentence' punctuation
-    tokenizer = Tokenizer(num_words=1000, filters='@#[\,;:-_~*"]()\t\n', lower=True, oov_token='UNK')
+    tokenizer = Tokenizer(num_words=1000, filters='@#[\,;:-_~*"]()\t\n', lower=True)
     # Extracts sequences of text
     tokenizer.fit_on_texts([text])
     # Convert sequences of text to sequences of integers
@@ -119,7 +122,7 @@ def extract_ngrams(text, n, str_len=None):
 
     return  ngrams_info
 
-def extract_characters(text, seq_len, str_len):
+def extract_characters(text, seq_len, str_len=None):
     """Extract n-grams
     :param text: text as string
     :param seq_len: length of the character sequences
@@ -135,11 +138,12 @@ def extract_characters(text, seq_len, str_len):
         text = text[:str_len]
     # Delete 'end-of-sentence' markers
     text = text.replace(' <end> ', ' ')
+    text = text.replace('\n', ' ')
 
     # Split text into character sequences
     sequ = []
-    for i in range(0, len(text)-seq_len):
-        sequ.append(text[i:i+seq_len])
+    for i in range(seq_len, len(text)):
+        sequ.append(text[i-seq_len:i+1])
 
     # Length of the longest sentence
     max_len = max(len(text.split(' . ')), max(len(text.split(' ! ')), len(text.split(' ? '))))
@@ -181,89 +185,59 @@ def extract_characters(text, seq_len, str_len):
 
     return char_info
 
-def gen_sent(start, max_len, model, tokenizer, limit):
-    """Generate sequences of tokens starting with the given input text
-    :param: start: word to start with
-    :param: max_len: length of the longest sequence (for padding)
-    :param: model: trained model
-    :param: tokenizer: tokenizer initialized with some text
-    :param: limit: maximum length of the generated sentence
-    :returns generated sentence as a list of tokens"""
-
-    text = start
-    sentence = [text]
-
-    # Predict the next word until an 'end-of-sentence' token is predicted or the maximum sequencec length is reached
-    for c in range(limit+1):
-        # Retrieve vector of current word
-        vec = tokenizer.texts_to_sequences([text])[0]
-        # Add padding
-        vec = pad_sequences([vec], maxlen=max_len, padding='pre')
-        # Predict next word
-        pred = model.predict_classes(vec, verbose=0)
-
-        # Look up the word of the predicted index and append it to the sequence
-        next_w = ''
-        for ind, wrd in tokenizer.index_word.items():
-            if ind == pred:
-                sentence.append(wrd)
-                next_w = wrd
-                break
-        text += ' ' + next_w
-        # Stop the loop when the next word is the 'end-of-sentence' marker
-        if next_w == '<end>':
-            break
-
-    return sentence
-
-
-def gen_sent_from_chars(start, num_chars, seq_len, model, char_ind, ind_char, limit):
-    """Generate a sentence starting with the given input character sequence
-    :param: start: character sequence to start with
-    :param: num_chars: unique characters / vocab length
-    :param: seq_len: length of characters sequences in X
-    :param: model: trained model
-    :param char_ind: character-index mapping
-    :param ind_char: index-character mapping
-    :param: limit: maximum length of the generated sentence
-    :returns generated sentence as a string"""
-
-    text = start
-
-    # Predict the next word until an 'end-of-sentence' token is predicted or the maximum sequence length is reached
-    for i in range(limit):
-        # Integer encode character sequence
-        text_enc = [char_ind[c] for c in text]
-        # Add padding
-        text_enc = pad_sequences([text_enc], maxlen=seq_len-1, truncating='pre')
-        #print(len(char_ind))
-        text_enc = to_categorical(text_enc, num_classes=num_chars)
-        # Predict next word
-        pred = model.predict_classes(text_enc, verbose=0)
-
-        # Look up the character of the predicted index and append it to the sequence
-        next_c = ''
-        for ind, char in ind_char.items():
-            if ind == pred:
-                next_c = char
-                break
-        text += next_c
-
-        # Stop the loop when the next word is the 'end-of-sentence' marker
-        if next_c == '.' or next_c == '!' or next_c == '?':
-            break
-
-    return text
 
 def save_to_file(corpus, sequences, mapping):
+    '''Preprocess corporus: save first 1000 lines, 10 character sequences
+    and character-index mappings to separate files
+    :param corpus: piece of text
+    :param sequences: character sequences
+    :param mapping: character-index dictionary'''
+
+    # Extract first 1000 lines from a text file
+    text = extract_text_gutenberg(corpus + '.txt')
+
+    f1 = open('../Ressources/' + corpus + '.txt', 'w')
+    c = 0
+    for l in text.split('\n'):
+        f1.write(l + '\n')
+        c += 1
+        if c > 1000: break
+
     # Write sequences to file
-    f = open(corpus + '-seq.txt', 'w')
+    f = open('../Ressources/' + corpus + '-seq.txt', 'w')
     for s in sequences:
         f.write(s+'\n')
 
     # Save character-index mapping as pickle file
-    dump(mapping, open(corpus + '-char-to-ind.pkl', 'wb'))
+    dump(mapping, open('../Ressources/' + corpus + '-char-to-ind.pkl', 'wb'))
 
-#t = extract_characters(extract_text_gutenberg('austen-emma.txt'), 10, 10000)
+def load_text(file):
+    '''Load the contents of a preprocessed corpus
+    :param file: text file in Ressources directory
+    :returns string representation of file content'''
+    f = open('../Ressources/' + file, 'r')
 
-#save_to_file('austen-emma', t['sequences'], t['char_index'])
+    return " ".join(f.readlines()).replace('\n', '')
+
+
+if __name__ == '__main__':
+    # Preprocess five corpora
+
+    #austen_emma = extract_characters(extract_text_gutenberg('austen-emma.txt'), 10)
+    #save_to_file('austen-emma', austen_emma['sequences'], austen_emma['char_index'])
+
+    #bible = extract_characters(extract_text_gutenberg('bible-kjv.txt'), 10)
+    #save_to_file('bible-kjv', bible['sequences'], bible['char_index'])
+
+    #shakespeare_hamlet = extract_characters(extract_text_gutenberg('shakespeare-hamlet.txt'), 10)
+    #save_to_file('shakespeare-hamlet', shakespeare_hamlet['sequences'], shakespeare_hamlet['char_index'])
+
+    #carroll_alice = extract_characters(extract_text_gutenberg('carroll-alice.txt'), 10)
+    #save_to_file('carroll-alice', carroll_alice['sequences'], carroll_alice['char_index'])
+
+    #blake_poems = extract_characters(extract_text_gutenberg('blake-poems.txt'), 10)
+    #save_to_file('blake-poems', blake_poems['sequences'], blake_poems['char_index'])
+
+    chesterton_brown = extract_characters(extract_text_gutenberg('chesterton-brown.txt'), 10)
+    save_to_file('chesterton-brown', chesterton_brown['sequences'], chesterton_brown['char_index'])
+    print(load_text('chesterton-brown.txt'))

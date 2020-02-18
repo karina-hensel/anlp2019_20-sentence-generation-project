@@ -1,18 +1,19 @@
 """Test format of n-grams for using them in a RNN"""
-from keras.models import Sequential
+import pandas
 from keras.layers import Dense, LSTM, Embedding
-import numpy as np
-import Preprocessing as pre
+from keras.models import Sequential
 
-def word_model(text, start, n, str_len):
+import Preprocessing as pre
+import Generator.Sentence_generator as gen
+
+def word_model(text, n, num_sent):
     """A model with an embedding, LSTM and linear layer
-    :param text: corpus
-    :param start: start sequence
+    :param text: training data
     :param n: n-gram size
-    :param str_len: only use part of the corpus if given
+    :param num_sent: number of sentences to generate
     :returns generated sentences"""
 
-    words = pre.extract_ngrams(text, n=n, str_len=str_len)
+    words = pre.extract_ngrams(text, n=n)
 
     X = words['X']
     y = words['Y']
@@ -30,18 +31,21 @@ def word_model(text, start, n, str_len):
 
     # Compile the model: provide loss function and optimizer for training
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
     # Fit the model for prediction, i.e. train it (500 epochs here)
-    model.fit(X, y, epochs=500, verbose=2)
+    model.fit(X, y, epochs=5, verbose=2)
 
-    return pre.gen_sent(start, max_len - 1, model, tokenizer, limit=10)
+    # Generate 5 random sentences
+    return gen.gen_random_sent(n, max_len - 1, model, tokenizer, 10, X, num_sent)
 
-def char_model(text, seq_len, str_len):
-    """A model with one LSTM and a linear output layer
-    :param X: vocabulary of characters
-    :param y: successive characters
-    :param vocab_len: length of vocabulary
-    :returns trained model"""
-    chars = pre.extract_characters(text, seq_len, str_len)
+def char_model(text, seq_len, num_sent):
+    """A model with one LSTM and a linear output layer for character-based generation
+    :param text: preprocessed text
+    :param seq_len: length of character-sequences in X
+    :param num_sent: number of sentences to generate
+    :returns generated sentences"""
+
+    chars = pre.extract_characters(text, seq_len)
 
     X = chars['X']
     y = chars['Y']
@@ -60,24 +64,37 @@ def char_model(text, seq_len, str_len):
     # Compile the model: provide loss function and optimizer for training
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     # Fit the model for prediction, i.e. train it (100 epochs here)
-    model.fit(X, y, epochs=100, verbose=2)
+    model.fit(X, y, epochs=10, verbose=2)
 
-    # Generate sentences
+    # Generate character sequences
+    return gen.gen_random_sent_from_chars(num_chars, seq_len, model, c2i, i2c, 10, num_sent)
 
-    return pre.gen_sent_from_chars('he was the ', num_chars, seq_len, model, c2i, i2c, 10)
+def print_sentences(corpus, sentences):
+    ''' Print all generated sentences
+    :param corpus: text
+    :param sentences: generated sentences
+    '''
+    headers2 = [str(i) for i in range(1, len(sentences)+1)]
+
+    print(corpus + '\n-------------------------')
+    print(pandas.DataFrame(sentences, headers2, ['']))
+    print()
 
 if __name__ == '__main__':
     # Get text as string
-    text = pre.extract_text_gutenberg('austen-emma.txt')
+    #text = pre.extract_text_gutenberg('austen-emma.txt')
+    text = pre.load_text('../Ressources/chesterton-brown.txt')
 
     # Test model with characters
-    print(char_model(text, 10, 10000))
+    sentences = char_model(text, 10, 5)
 
     # Test model with single words
-    print(word_model(text, 'she', 1, 10000))
+    #print(word_model(text, 'she', 1, 10000))
+    #sentences = char_model(text, 1, 5)
 
     # Test model with bigrams
-    print(word_model(text, 'she has', 2, 10000))
+    #print(word_model(text, 'she has', 2, 10000))
 
     # Test model with trigrams
-    print(word_model(text, 'she has been', 3, 10000))
+    #print(word_model(text, 'she has been', 3, 10000))
+    print_sentences('chesterton-brown', sentences)

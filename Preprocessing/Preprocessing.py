@@ -1,6 +1,7 @@
 """Extract n-grams of different sizes from a corpus, format them and save relevant ressources to files"""
 from keras_preprocessing.sequence import pad_sequences
 from nltk.corpus import gutenberg
+from nltk.tokenize import RegexpTokenizer
 import numpy as np
 from keras.preprocessing.text import Tokenizer
 from keras.utils import to_categorical
@@ -33,155 +34,98 @@ def extract_text_gutenberg(corpus):
     text = text.replace('."', ' ? <end> ')
     return text
 
-'''def extract_words(text, str_len=None):
-    """Extract text from a file as a string (old; use extract_ngrams with n=1 instead)
-    :param text: text as string
-    :param str_len (optional): only use substring
-    :returns list with indexed input words, correct successive words (one-hot vectors),
-    vocabulary length, tokenizer instance"""
 
-    if str_len != None:
-        text = text[:str_len]
-    # Tokenizer does not filter for 'end-of-sentence' punctuation
-    tokenizer = Tokenizer(num_words=1000, filters='@#[\,;:-_~*"]()\t\n', lower=True, oov_token='UNK')
-    # Extracts sequences of text
-    tokenizer.fit_on_texts([text])
-    # Convert sequences of text to sequences of integers
-    int_enc = tokenizer.texts_to_sequences([text])[0]
-
-    # Store vocabulary length for embedding layer (+ 1 to encode longest word)
-    vocab_len = len(tokenizer.word_index) + 1
-
-    # Create word-word sequences
-    sequences = list()
-    for i in range(1, len(int_enc)):
-        tmp = int_enc[i - 1:i + 1]
-        sequences.append(tmp)
-
-    # Longest sequence
-    max_len = max([len(s) for s in sequences])
-    # Split into first and second element of sequence
-    sequences = np.array(sequences)
-    X = sequences[:, 0]
-    y = sequences[:, 1]
-
-    # Use Keras to_categorical() function to one-hot encode the output / second word
-    y = to_categorical(y, num_classes=vocab_len)
-
-    return [X, y, vocab_len, tokenizer, max_len]'''
-
-
-def extract_ngrams(text, n, str_len=None):
+def extract_ngrams(text, n):
     """Extract n-grams
     :param text: text as string
     :param n: n-gram size
-    :param str_len (optional): only use substring
-    :returns dictionary with indexed input bigrams, correct successive words (one-hot vectors),
-    vocabulary length, tokenizer instance, max. sequence length"""
+    :returns dictionary with one-hot vectors for input ngrams and correct successive words,
+    a list of unique words, number of unique words, word-index mapping"""
 
-    # Dictionary to return X, y, , tokenizer, max_len
-    ngrams_info = dict.fromkeys(['X', 'Y', 'vocab_len', 'tokenizer', 'max_len'])
+    # Dictionary to return
+    ngrams_info = dict.fromkeys(['X', 'Y', 'vocab_len', 'tokenizer'])
 
-    # Only use part of text if specified
-    if str_len != None:
-        text = text[:str_len]
+    tokenizer = RegexpTokenizer(r'\w+')
+    # Reserve one token for unknown words
+    words = tokenizer.tokenize(text + ' UNK')
 
-    # Tokenizer does not filter for 'end-of-sentence' punctuation
-    tokenizer = Tokenizer(num_words=1000, filters='@#[\,;:-_~*"]()\t\n', lower=True)
-    # Extracts sequences of text
-    tokenizer.fit_on_texts([text])
-    # Convert sequences of text to sequences of integers
-    int_enc = tokenizer.texts_to_sequences([text])[0]
+    unique_words = np.unique(words)
+    unique_word_index = dict((c, i) for i, c in enumerate(unique_words))
 
-    # Store vocabulary length for embedding layer (+ 1 to encode longest word)
-    vocab_len = len(tokenizer.word_index) + 1
+    WORD_LENGTH = n
+    prev_words = []
+    next_words = []
 
-    sequences = list()
+    # feature engineering: number of previous words that determines the next word
+    for i in range(len(words) - WORD_LENGTH):
+        prev_words.append(words[i:i + WORD_LENGTH])
+        next_words.append(words[i + WORD_LENGTH])
 
-    # Create sequences of n words(ngram + successive word)
-    for i in range(n, len(int_enc)):
-        tmp = int_enc[i - n:i + 1]
-        sequences.append(tmp)
-
-    # Find padding length
-    max_len = max([len(s) for s in sequences])
-    sequences = pad_sequences(sequences, maxlen=max_len, padding='pre')
-
-    sequences2 = np.array(sequences)
-    X = sequences2[:, :-1]
-    y = sequences2[:, -1]
-
-    # Use Keras to_categorical() function to one-hot encode the output / second word
-    y = to_categorical(y, num_classes=vocab_len)
+    # one hot encoding
+    X = np.zeros((len(prev_words), WORD_LENGTH, len(unique_words)), dtype=bool)
+    Y = np.zeros((len(next_words), len(unique_words)), dtype=bool)
+    for i, each_words in enumerate(prev_words):
+        for j, each_word in enumerate(each_words):
+            X[i, j, unique_word_index[each_word]] = 1
+        Y[i, unique_word_index[next_words[i]]] = 1
 
     ngrams_info['X'] = X
-    ngrams_info['Y'] = y
-    ngrams_info['vocab_len'] = vocab_len
-    ngrams_info['tokenizer'] = tokenizer
-    ngrams_info['max_len'] = max_len
+    ngrams_info['Y'] = Y
+    ngrams_info['unique_words'] = unique_words
+    ngrams_info['len_unique_words'] = len(unique_words)
+    ngrams_info['unique_word_index'] = unique_word_index
 
     return  ngrams_info
 
-def extract_characters(text, seq_len, str_len=None):
-    """Extract n-grams
+def extract_characters(text, seq_len):
+    """Extract character sequences
     :param text: text as string
     :param seq_len: length of the character sequences
-    :param str_len (optional): only use substring
-    :returns dictionary with one-hot encoded input sequences, correct successive words (one-hot vectors),
-    vocabulary length, sequence length, mappings from characters to index and from index to characters"""
+    :returns dictionary with one-hot encoded character input sequences and correct successive words,
+    a list of unique characters, number of unique characters, character-index mapping"""
 
     # Dictionary to return
-    char_info = dict.fromkeys(['X', 'Y', 'num_chars', 'max_len', 'seq_len', 'char_index', 'index_char', 'sequences'])
+    char_info = dict.fromkeys(['X', 'Y', 'unique_characters', 'len_unique_characters', 'unique_characters_index'])
 
-    # Only use part of text if specified
-    if str_len != None:
-        text = text[:str_len]
     # Delete 'end-of-sentence' markers
     text = text.replace(' <end> ', ' ')
     text = text.replace('\n', ' ')
 
     # Split text into character sequences
-    sequ = []
+    character_sequences = []
+    unique_characters = list(set(list(text)))
+
     for i in range(seq_len, len(text)):
-        sequ.append(text[i-seq_len:i+1])
+        character_sequences.append(text[i - seq_len:i + 1])
 
-    # Length of the longest sentence
-    max_len = max(len(text.split(' . ')), max(len(text.split(' ! ')), len(text.split(' ? '))))
+    unique_character_index = dict((c, i) for i, c in enumerate(unique_characters))
 
-    # Extract unique characters
-    chars = sorted(list(set(text)))
-    num_chars = len(chars)
+    SEQUENCE_LENGTH = seq_len
+    prev_characters = []
+    next_characters = []
 
-    # Map characters to indices
-    char_index = {c:i for i, c in enumerate(chars)}
-    # Reverse
-    index_char = {i:c for i, c in enumerate(chars)}
+    # feature engineering: number of previous words that determines the next word
 
-    # Integer encode all sequences
-    sequences = list()
+    for i in range(len(character_sequences) - SEQUENCE_LENGTH):
+        prev_characters.append(character_sequences[i])
+        next_characters.append(character_sequences[i + 1][-1])
 
-    for s in sequ:
-        tmp = [char_index[c] for c in s]
-        sequences.append(tmp)
+    # one hot encoding
+    X = np.zeros((len(prev_characters), SEQUENCE_LENGTH, len(unique_characters)), dtype=bool)
+    Y = np.zeros((len(next_characters), len(unique_characters)), dtype=bool)
+    print(X.shape)
+    print(Y.shape)
+    for i, each_chars in enumerate(prev_characters):
+        for j, each_char in enumerate(each_chars):
+            X[i, j-1, unique_character_index[each_char]] = 1
+        Y[i, unique_character_index[next_characters[i]]] = 1
 
-    # Create input and output pairs
-    sequences = np.array(sequences)
-    X = sequences[:, :-1]
-    y = sequences[:, -1]
-
-    # One-hot encode each sequence and each successive character
-    sequences = [to_categorical(s, num_classes=num_chars) for s in X]
-    X = np.array(sequences)
-    y = to_categorical(y, num_classes=num_chars)
 
     char_info['X'] = X
-    char_info['Y'] = y
-    char_info['num_chars'] = num_chars
-    char_info['max_len'] = max_len
-    char_info['seq_len'] = seq_len
-    char_info['char_index'] = char_index
-    char_info['index_char'] = index_char
-    char_info['sequences'] = sequ
+    char_info['Y'] = Y
+    char_info['unique_characters'] = unique_characters
+    char_info['len_unique_characters'] = len(unique_characters)
+    char_info['unique_characters_index'] = unique_character_index
 
     return char_info
 
@@ -239,5 +183,6 @@ if __name__ == '__main__':
     #save_to_file('blake-poems', blake_poems['sequences'], blake_poems['char_index'])
 
     chesterton_brown = extract_characters(extract_text_gutenberg('chesterton-brown.txt'), 10)
-    save_to_file('chesterton-brown', chesterton_brown['sequences'], chesterton_brown['char_index'])
-    print(load_text('chesterton-brown.txt'))
+    #save_to_file('chesterton-brown', chesterton_brown['sequences'], chesterton_brown['char_index'])
+    #print(load_text('chesterton-brown.txt'))
+    print(chesterton_brown)

@@ -1,18 +1,14 @@
-"""Extract n-grams of different sizes from a corpus, format them and save relevant ressources to files"""
-from keras_preprocessing.sequence import pad_sequences
+'''Extract n-grams of different sizes from a corpus, format them and save relevant ressources to files'''
 from nltk.corpus import gutenberg
 from nltk.tokenize import RegexpTokenizer
 import numpy as np
-from keras.preprocessing.text import Tokenizer
-from keras.utils import to_categorical
-from pickle import dump, load
-import random
+from pickle import dump
 
 
 def extract_text(corpus):
-    """Extract text from a file as a string
+    '''Extract text from a file as a string
     :param corpus: input .txt file
-    :returns text as string"""
+    :returns text as string'''
 
     # Read in text
     text = ''
@@ -22,9 +18,9 @@ def extract_text(corpus):
     return text.replace('.', '. <end>')
 
 def extract_text_gutenberg(corpus):
-    """Extract text via nltk
+    '''Extract text via nltk
     :param corpus: file id
-    :returns text as string"""
+    :returns text as string'''
 
     text = gutenberg.raw(corpus).replace('. ', ' . <end> ')
     text = text.replace('? ', ' ? <end> ')
@@ -36,11 +32,11 @@ def extract_text_gutenberg(corpus):
 
 
 def extract_ngrams(text, n):
-    """Extract n-grams
+    '''Extract n-grams
     :param text: text as string
     :param n: n-gram size
     :returns dictionary with one-hot vectors for input ngrams and correct successive words,
-    a list of unique words, number of unique words, word-index mapping"""
+    a list of unique words, number of unique words, word-index mapping'''
 
     # Dictionary to return
     ngrams_info = dict.fromkeys(['X', 'Y', 'vocab_len', 'tokenizer'])
@@ -78,11 +74,11 @@ def extract_ngrams(text, n):
     return  ngrams_info
 
 def extract_characters(text, seq_len):
-    """Extract character sequences
+    '''Extract character sequences
     :param text: text as string
     :param seq_len: length of the character sequences
     :returns dictionary with one-hot encoded character input sequences and correct successive words,
-    a list of unique characters, number of unique characters, character-index mapping"""
+    a list of unique characters, number of unique characters, character-index mapping'''
 
     # Dictionary to return
     char_info = dict.fromkeys(['X', 'Y', 'unique_characters', 'len_unique_characters', 'unique_characters_index'])
@@ -104,8 +100,7 @@ def extract_characters(text, seq_len):
     prev_characters = []
     next_characters = []
 
-    # feature engineering: number of previous words that determines the next word
-
+    # feature engineering: number of previous characters that determines the next character
     for i in range(len(character_sequences) - SEQUENCE_LENGTH):
         prev_characters.append(character_sequences[i])
         next_characters.append(character_sequences[i + 1][-1])
@@ -131,7 +126,7 @@ def extract_characters(text, seq_len):
 
 
 def save_to_file(corpus, sequences, mapping):
-    '''Preprocess corporus: save first 1000 lines, 10 character sequences
+    '''Preprocess corpus: save first 1000 lines, 10 character sequences
     and character-index mappings to separate files
     :param corpus: piece of text
     :param sequences: character sequences

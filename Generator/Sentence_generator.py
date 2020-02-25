@@ -1,169 +1,172 @@
+import heapq
 import random
 
-from keras.preprocessing.sequence import pad_sequences
-from keras.utils import to_categorical
+import numpy as np
+from nltk import RegexpTokenizer
 
 
-def gen_sent(start, max_len, model, tokenizer, limit):
+def gen_sent(start, n, unique_words, unique_word_index, model, limit):
     """Generate sequences of tokens starting with the given input text
     :param: start: word to start with
-    :param: max_len: length of the longest sequence (for padding)
+    :param: n: n-gram length
+    :param: unique__words: vocabulary
+    :param: unique_word_index: word-index mapping
     :param: model: trained model
-    :param: tokenizer: tokenizer initialized with some text
-    :param: limit: maximum length of the generated sentence
+    :param: limit: maximal sentence length
     :returns generated sentence as a list of tokens"""
 
+    WORD_LENGTH = n
+
+    def prepare_input(text):
+        x = np.zeros((1, WORD_LENGTH, len(unique_words)))
+        for t, word in enumerate(text.split()):
+            if word in unique_word_index.keys():
+                x[0, t, unique_word_index[word]] = 1
+            else:
+                x[0, t, unique_word_index['UNK']] = 1
+        return x
+
+    def sample(preds, top_n=3):
+        preds = np.asarray(preds).astype('float64')
+        preds = np.log(preds)
+        exp_preds = np.exp(preds)
+        preds = exp_preds / np.sum(exp_preds)
+
+        return heapq.nlargest(top_n, range(len(preds)), preds.take)
+
+    def predict_completions(text, n=1):
+        if text == "":
+            return ("0")
+        x = prepare_input(text)
+        preds = model.predict(x, verbose=0)[0]
+        next_indices = sample(preds, n)
+        return [unique_words[idx] for idx in next_indices]
+
+    # Initialize tokenizer
+    tokenizer = RegexpTokenizer(r'\w+')
     text = start
     sentence = [text]
 
     # Predict the next word until an 'end-of-sentence' token is predicted or the maximum sequence length is reached
     for c in range(limit+1):
-        # Retrieve vector of current word
-        vec = tokenizer.texts_to_sequences([text])[0]
-        # Add padding
-        vec = pad_sequences([vec], maxlen=max_len, padding='pre')
-        # Predict next word
-        pred = model.predict_classes(vec, verbose=0)
-
-        # Look up the word of the predicted index and append it to the sequence
-        next_w = ''
-        for ind, wrd in tokenizer.index_word.items():
-            if ind == pred:
-                sentence.append(wrd)
-                next_w = wrd
-                break
-        text += ' ' + next_w
-        # Stop the loop when the next word is the 'end-of-sentence' marker
-        if next_w == '<end>':
-            break
+        text = " ".join(tokenizer.tokenize(text.lower())[0:WORD_LENGTH])
+        next_word = predict_completions(text, 1)
+        text = text + " " + next_word[0]
+        sentence.append(next_word[0])
 
     return sentence
 
-
-def gen_sent_from_chars(start, num_chars, seq_len, model, char_ind, ind_char, limit):
-    """Generate a sentence starting with the given input character sequence
-    :param: start: character sequence to start with
-    :param: num_chars: unique characters / vocab length
-    :param: seq_len: length of characters sequences in X
+def gen_random_sent(n, unique_words, unique_word_index, model, limit):
+    """Generate sequences of tokens starting a randomly selected input word
+    :param: n: n-gram length
+    :param: unique__words: vocabulary
+    :param: unique_word_index: word-index mapping
     :param: model: trained model
-    :param char_ind: character-index mapping
-    :param ind_char: index-character mapping
-    :param: limit: maximum length of the generated sentence
-    :returns generated sentence as a string"""
-
-    text = start
-
-    # Predict the next word until an 'end-of-sentence' token is predicted or the maximum sequence length is reached
-    for i in range(limit):
-        # Integer encode character sequence
-        text_enc = [char_ind[c] for c in text]
-        # Add padding
-        text_enc = pad_sequences([text_enc], maxlen=seq_len-1, truncating='pre')
-        #print(len(char_ind))
-        text_enc = to_categorical(text_enc, num_classes=num_chars)
-        # Predict next word
-        pred = model.predict_classes(text_enc, verbose=0)
-
-        # Look up the character of the predicted index and append it to the sequence
-        next_c = ''
-        for ind, char in ind_char.items():
-            if ind == pred:
-                next_c = char
-                break
-        text += next_c
-
-        # Stop the loop when the next word is the 'end-of-sentence' marker
-        if next_c == '.' or next_c == '!' or next_c == '?':
-            break
-
-    return text
-
-def gen_random_sent(n, max_len, model, tokenizer, limit, X, num_sent):
-    """Generate 5 sentences, each starting with randomly selected start token(s)
-    :param: n-gram size
-    :param: max_len: length of the longest sequence (for padding)
-    :param: model: trained model
-    :param: tokenizer: tokenizer initialized with some text
-    :param: limit: maximum length of the generated sentence
-    :param: X: observed n-grams
-    :param: num_sent: number of sentences to generate
+    :param: limit: maximal sentence length
     :returns generated sentence as a list of tokens"""
 
-    sentences = []
-    for i in range(0, num_sent):
-        # Randomly select an (observed) n-gram
-        text = ''
-        ind = random.randint(0, len(X))
-        start = ''
-        for j in range(0, n):
-            start += tokenizer.index_word[X[ind][j]] + ' '
-        text += start[:-1]
-        sentence = [text]
+    WORD_LENGTH = n
 
-        # Predict the next word until an 'end-of-sentence' token is predicted or the maximum sequence length is reached
-        for c in range(limit+1):
-            # Retrieve vector of current word
-            vec = tokenizer.texts_to_sequences([text])[0]
-            # Add padding
-            vec = pad_sequences([vec], maxlen=max_len, padding='pre')
-            # Predict next word
-            pred = model.predict_classes(vec, verbose=0)
+    def prepare_input(text):
+        x = np.zeros((1, WORD_LENGTH, len(unique_words)))
+        for t, word in enumerate(text.split()):
+            if word in unique_word_index.keys():
+                x[0, t, unique_word_index[word]] = 1
+            else:
+                x[0, t, unique_word_index['UNK']] = 1
+        return x
 
-            # Look up the word of the predicted index and append it to the sequence
-            next_w = ''
-            for ind, wrd in tokenizer.index_word.items():
-                if ind == pred:
-                    sentence.append(wrd)
-                    next_w = wrd
-                    break
-            text += ' ' + next_w
-            # Stop the loop when the next word is the 'end-of-sentence' marker
-            if next_w == '<end>':
-                break
-        sentences.append(text)
+    def sample(preds, top_n=3):
+        preds = np.asarray(preds).astype('float64')
+        preds = np.log(preds)
+        exp_preds = np.exp(preds)
+        preds = exp_preds / np.sum(exp_preds)
 
-    return sentences
+        return heapq.nlargest(top_n, range(len(preds)), preds.take)
 
-def gen_random_sent_from_chars(num_chars, seq_len, model, char_ind, ind_char, limit, num_sent):
-    """Generate a sentence starting with the given input character sequence
-    :param: num_chars: unique characters / vocab length
-    :param: seq_len: length of characters sequences in X
-    :param: model: trained model
-    :param char_ind: character-index mapping
-    :param ind_char: index-character mapping
-    :param: limit: maximum length of the generated sentence
-    :param: num_sent: number of sentences to generate
-    :returns generated sentence as a string"""
+    def predict_completions(text, n=1):
+        if text == "":
+            return ("0")
+        x = prepare_input(text)
+        preds = model.predict(x, verbose=0)[0]
+        next_indices = sample(preds, n)
+        return [unique_words[idx] for idx in next_indices]
 
-    sentences = []
+    # Initialize tokenizer
+    tokenizer = RegexpTokenizer(r'\w+')
 
-    for i in range(0, num_sent):
-        ind = random.randint(0, num_chars-1)
-        start = ind_char[ind]
-        text = start
+    # Select a random word from the vocabulary
+    ind = random.randint(0, len(unique_words))
+    start = unique_words[ind] + ' '
+    text = start
+    sentence = [text]
 
-        # Predict the next word until an 'end-of-sentence' token is predicted or the maximum sequence length is reached
-        for i in range(0, limit):
-            # Integer encode character sequence
-            text_enc = [char_ind[c] for c in text]
-            # Add padding
-            text_enc = pad_sequences([text_enc], maxlen=seq_len, truncating='pre')
-            text_enc = to_categorical(text_enc, num_classes=num_chars)
-            # Predict next word
-            pred = model.predict_classes(text_enc, verbose=0)
+    # Predict the next word until an 'end-of-sentence' token is predicted or the maximum sequence length is reached
+    for c in range(limit+1):
+        text = " ".join(tokenizer.tokenize(text.lower())[0:WORD_LENGTH])
+        next_word = predict_completions(text, 1)
+        text = text + " " + next_word[0]
+        sentence.append(next_word[0])
 
-            # Look up the character of the predicted index and append it to the sequence
-            next_c = ''
-            for ind, char in ind_char.items():
-                if ind == pred:
-                    next_c = char
-                    break
-            text += next_c
+    return sentence
 
-            # Stop the loop when the next word is the 'end-of-sentence' marker
-            if next_c == '.' or next_c == '!' or next_c == '?':
-                break
+def assign_author(sentence, models, unique_w_ind, word_length):
+    '''Compute the probability of a generated sentence to be written by each author
+    represented in the dataset / model which assigns the highest probability to a sentence
+    :param sentence: (generated) sentence
+    :param models: list of models (one for each author)
+    :param unique_w_ind: list of word-index mappings for each model
+    :param word_length: n-gram size
+    :returns index of the model which assigns the highest probability to the sentence'''
 
-        sentences.append(text)
+    max_prob = float('-inf')
+    best_model = ''
 
-    return sentences
+    tokenizer = RegexpTokenizer(r'\w+')
+    words = tokenizer.tokenize(sentence)
+    WORD_LENGTH = word_length
+
+    prev_words = []
+    next_words = []
+
+    # Convert sentence to sequences of previous and next words
+    for i in range(len(words) - WORD_LENGTH):
+        prev_words.append(words[i:i + WORD_LENGTH])
+        next_words.append(words[i + WORD_LENGTH])
+
+    # Compute probability of the sentence with each model
+    for x, model in enumerate(models):
+        print(x)
+        log_prob_sent = 0.0
+        # Load index mappings for the current model
+        unique_word_index = unique_w_ind[x]
+        unique_index_word = dict((ind, wrd) for wrd, ind in unique_word_index.items())
+
+        # Convert sentence to one-hot vectors
+        X = np.zeros((len(prev_words), WORD_LENGTH, len(unique_word_index)), dtype=bool)
+        Y = []
+
+        for next_word in next_words:
+            if next_word in unique_word_index.keys():
+                Y.append(unique_word_index[next_word])
+            else:
+                Y.append(unique_word_index['UNK'])
+
+        # Step through the sentence to compute the overall probability
+        for i, each_words in enumerate(prev_words):
+            for j, each_word in enumerate(each_words):
+                if each_word in unique_word_index.keys():
+                    X[i, j, unique_word_index[each_word]] = 1
+                else:
+                    X[i, j, unique_word_index['UNK']] = 1
+            p_pred = model.predict(X, verbose=0)[0]
+            prob_word = p_pred[Y[i]]
+            print(prob_word)
+            log_prob_sent += np.log(prob_word)
+            print(log_prob_sent)
+
+        if np.exp(log_prob_sent) > max_prob:
+            max_prob = np.exp(log_prob_sent)
+            best_model = x
+
+        return best_model

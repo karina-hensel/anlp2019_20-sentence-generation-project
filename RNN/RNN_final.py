@@ -22,28 +22,27 @@ from sklearn.utils import shuffle
 from Preprocessing import Preprocessing as pre
 
 #import book and create unique words
-text = gutenberg.raw('carroll-alice.txt')[:100000]
+text = pre.extract_text_gutenberg('austen-emma.txt')
+#text = pre.extraact_ngrams(text, n)
 print('corpus length:', len(text))
 
-tokenizer = RegexpTokenizer(r'\w+')
-words = tokenizer.tokenize(text)
+#tokenizer = RegexpTokenizer(r'\w+')
+#words = tokenizer.tokenize(text)
 
 #Feature engineering.
 #1. Create unique words & predict accorsing to author style.
-unique_words = np.unique(words)
-unique_word_index = dict((c, i) for i, c in enumerate(unique_words))
+#unique_words = np.unique(words)
+#unique_word_index = dict((c, i) for i, c in enumerate(unique_words))
 
 
 
 #2. Define word length. Next word depends on the 5 previous words.
-WORD_LENGTH = 1
-prev_words = []
+WORD_LENGTH = 2
+'''prev_words = []
 next_words = []
 for i in range(len(words) - WORD_LENGTH):
     prev_words.append(words[i:i + WORD_LENGTH])
     next_words.append(words[i + WORD_LENGTH])
-# print(prev_words[0])
-#print(next_words[0])
 
 #One hot encoding
 X = np.zeros((len(prev_words), WORD_LENGTH, len(unique_words)), dtype=bool)
@@ -51,14 +50,15 @@ Y = np.zeros((len(next_words), len(unique_words)), dtype=bool)
 for i, each_words in enumerate(prev_words):
     for j, each_word in enumerate(each_words):
         X[i, j, unique_word_index[each_word]] = 1
-    Y[i, unique_word_index[next_words[i]]] = 1
+    Y[i, unique_word_index[next_words[i]]] = 1'''
 
-'''char_info = pre.extract_characters(text, 10)
+char_info = pre.extract_ngrams(text, 2)
 X =char_info['X']
+
 Y = char_info['Y']
-unique_words = char_info['unique_characters']
-len_unique_characters = char_info['len_unique_characters']
-unique_character_index=char_info['unique_characters_index']'''
+unique_words = char_info['unique_words']
+len_unique_characters = char_info['len_unique_words']
+unique_character_index=char_info['unique_word_index']
 #earning_rate = 0.1
 #decay_rate = 0.1
 #epochs = 2
@@ -73,18 +73,28 @@ unique_character_index=char_info['unique_characters_index']'''
 #model.add(Activation('softmax'))
 #model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 
-#Training
+#Training: character model
+'''optimizer = optimizers.adam(lr=0.001)
+model = Sequential()
+model.add(LSTM(128, input_shape=(X.shape[1], X.shape[2])))
+model.add(Dropout(0.2))
+model.add(Dense(len_unique_characters))
+model.add(Activation('softmax'))
+model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
+hist = model.fit(X, Y, validation_split=0.05, batch_size=128, epochs=10, shuffle=True).history'''
+
+#Training: ngram model
 optimizer = optimizers.adam(lr=0.1)
 model = Sequential()
 model.add(LSTM(128, input_shape=(WORD_LENGTH, len(unique_words))))
 model.add(Dropout(0.2))
-model.add(Dense(len(unique_words)))
+model.add(Dense(len(unique_words)+1))
 model.add(Activation('softmax'))
 model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 hist = model.fit(X, Y, validation_split=0.05, batch_size=128, epochs=10, shuffle=True).history
 
-model.save('keras_next_word_model_carroll.h1')
-pickle.dump(hist, open("history_carroll.p1", "wb"))
+model.save('keras_next_word_model_austen.h2')
+pickle.dump(hist, open("history_austen.p2", "wb"))
 # define the learning rate change
 #def exp_decay(epoch):
     #lrate = learning_rate * np.exp(-decay_rate*epoch)

@@ -22,7 +22,7 @@ def extract_text_gutenberg(corpus):
     :param corpus: file id
     :returns text as string'''
 
-    text = gutenberg.raw(corpus).replace('. ', ' . <end> ')
+    text = gutenberg.raw(corpus)[:100000].replace('. ', ' . <end> ')
     text = text.replace('? ', ' ? <end> ')
     text = text.replace('! ', ' ! <end> ')
     text = text.replace('?"', ' ? <end> ')
@@ -41,25 +41,28 @@ def extract_ngrams(text, n):
     # Dictionary to return
     ngrams_info = dict.fromkeys(['X', 'Y', 'vocab_len', 'tokenizer'])
 
+    # Tokenize input
     tokenizer = RegexpTokenizer(r'\w+')
     # Reserve one token for unknown words
     words = tokenizer.tokenize(text + ' UNK')
 
     unique_words = np.unique(words)
     unique_word_index = dict((c, i) for i, c in enumerate(unique_words))
+    unique_word_index['UNK'] = len(unique_word_index)
 
     WORD_LENGTH = n
     prev_words = []
     next_words = []
 
-    # feature engineering: number of previous words that determines the next word
+    # Split the text into sequences of size WORD_LENGTH and the correct successive word
     for i in range(len(words) - WORD_LENGTH):
         prev_words.append(words[i:i + WORD_LENGTH])
         next_words.append(words[i + WORD_LENGTH])
 
-    # one hot encoding
+    # One hot encoding of ngram sequences and successive words
     X = np.zeros((len(prev_words), WORD_LENGTH, len(unique_words)), dtype=bool)
-    Y = np.zeros((len(next_words), len(unique_words)), dtype=bool)
+    Y = np.zeros((len(next_words), len(unique_words)+1), dtype=bool)
+
     for i, each_words in enumerate(prev_words):
         for j, each_word in enumerate(each_words):
             X[i, j, unique_word_index[each_word]] = 1
@@ -76,8 +79,8 @@ def extract_ngrams(text, n):
 def extract_characters(text, seq_len):
     '''Extract character sequences
     :param text: text as string
-    :param seq_len: length of the character sequences
-    :returns dictionary with one-hot encoded character input sequences and correct successive words,
+    :param seq_len: length of the character sequences which is used to predict the following character
+    :returns dictionary with one-hot encoded character input sequences and correct successive character,
     a list of unique characters, number of unique characters, character-index mapping'''
 
     # Dictionary to return
@@ -87,32 +90,31 @@ def extract_characters(text, seq_len):
     text = text.replace(' <end> ', ' ')
     text = text.replace('\n', ' ')
 
-    # Split text into character sequences
-    character_sequences = []
-    unique_characters = list(set(list(text)))
-
-    for i in range(seq_len, len(text)):
-        character_sequences.append(text[i - seq_len:i + 1])
-
-    unique_character_index = dict((c, i) for i, c in enumerate(unique_characters))
-
+    # Split text into character sequences and successive characters
     SEQUENCE_LENGTH = seq_len
     prev_characters = []
+    unique_characters = list(set(list(text)))
     next_characters = []
 
-    # feature engineering: number of previous characters that determines the next character
-    for i in range(len(character_sequences) - SEQUENCE_LENGTH):
-        prev_characters.append(character_sequences[i])
-        next_characters.append(character_sequences[i + 1][-1])
 
-    # one hot encoding
+    for i in range(seq_len, len(text)-1):
+        prev_characters.append([text[i - seq_len:i + 1]])
+        next_characters.append(text[i + 1])
+
+    unique_character_index = dict((c, i) for i, c in enumerate(unique_characters))
+    unique_character_index['UNK'] = len(unique_character_index)
+
+    # feature engineering: number of previous characters that determines the next character
+    for i in range(0,len(prev_characters) - 1):
+        prev_characters.append(prev_characters[i])
+
+    # One hot encoding of character sequences and successive character
     X = np.zeros((len(prev_characters), SEQUENCE_LENGTH, len(unique_characters)), dtype=bool)
     Y = np.zeros((len(next_characters), len(unique_characters)), dtype=bool)
-    print(X.shape)
-    print(Y.shape)
+
     for i, each_chars in enumerate(prev_characters):
         for j, each_char in enumerate(each_chars):
-            X[i, j-1, unique_character_index[each_char]] = 1
+            X[i, j-1, unique_character_index[each_char[j]]] = 1
         Y[i, unique_character_index[next_characters[i]]] = 1
 
 
@@ -138,9 +140,11 @@ def save_to_file(corpus, sequences, mapping):
     f1 = open('../Ressources/' + corpus + '.txt', 'w')
     c = 0
     for l in text.split('\n'):
+        print(l)
         f1.write(l + '\n')
         c += 1
-        if c > 1000: break
+        if c > 1000:
+            break
 
     # Write sequences to file
     f = open('../Ressources/' + corpus + '-seq.txt', 'w')
@@ -162,8 +166,8 @@ def load_text(file):
 if __name__ == '__main__':
     # Preprocess five corpora
 
-    #austen_emma = extract_characters(extract_text_gutenberg('austen-emma.txt'), 10)
-    #save_to_file('austen-emma', austen_emma['sequences'], austen_emma['char_index'])
+    austen_emma = extract_characters(extract_text_gutenberg('austen-emma.txt'), 10)
+    save_to_file('austen-emma', 1, 10)#austen_emma['sequences'], austen_emma['char_index'])
 
     #bible = extract_characters(extract_text_gutenberg('bible-kjv.txt'), 10)
     #save_to_file('bible-kjv', bible['sequences'], bible['char_index'])
@@ -177,7 +181,7 @@ if __name__ == '__main__':
     #blake_poems = extract_characters(extract_text_gutenberg('blake-poems.txt'), 10)
     #save_to_file('blake-poems', blake_poems['sequences'], blake_poems['char_index'])
 
-    chesterton_brown = extract_characters(extract_text_gutenberg('chesterton-brown.txt'), 10)
+    #chesterton_brown = extract_characters(extract_text_gutenberg('chesterton-brown.txt'), 10)
     #save_to_file('chesterton-brown', chesterton_brown['sequences'], chesterton_brown['char_index'])
     #print(load_text('chesterton-brown.txt'))
-    print(chesterton_brown)
+    #print(chesterton_brown)

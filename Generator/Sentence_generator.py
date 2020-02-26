@@ -2,6 +2,7 @@ import heapq
 import random
 
 import numpy as np
+import pandas
 from nltk import RegexpTokenizer
 
 
@@ -135,8 +136,7 @@ def assign_author(sentence, models, unique_w_ind, word_length):
         next_words.append(words[i + WORD_LENGTH])
 
     # Compute probability of the sentence with each model
-    for x, model in enumerate(models):
-        print(x)
+    for x, author, model in enumerate(models.items()):
         log_prob_sent = 0.0
         # Load index mappings for the current model
         unique_word_index = unique_w_ind[x]
@@ -161,12 +161,27 @@ def assign_author(sentence, models, unique_w_ind, word_length):
                     X[i, j, unique_word_index['UNK']] = 1
             p_pred = model.predict(X, verbose=0)[0]
             prob_word = p_pred[Y[i]]
-            print(prob_word)
             log_prob_sent += np.log(prob_word)
-            print(log_prob_sent)
 
         if np.exp(log_prob_sent) > max_prob:
             max_prob = np.exp(log_prob_sent)
-            best_model = x
+            best_model = author
 
-        return best_model
+    return (best_model, max_prob)
+
+def print_sentences(corpus, sentences, pred_author, probs):
+    ''' Print all generated sentences
+    :param corpus: text
+    :param sentences: generated sentences
+    :param pred_author: list of models which assigned the highest probability to each sentence
+    :param probs: highest probability for each sentence
+    '''
+    table = {'Sentence': sentences, 'Author': [corpus]*len(sentences), 'Predicted author': pred_author,
+             'Probability': probs}
+    df = pandas.DataFrame(data=table)
+    headers2 = [str(i) for i in range(1, len(sentences)+1)]
+
+    print(corpus + '\n-------------------------')
+    print(pandas.DataFrame(sentences, headers2, ['']))
+    #print(df.to_string())
+    #df.to_csv(corpus + '.tsv', sep='\t')

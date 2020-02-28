@@ -74,7 +74,7 @@ def generate():
             sentences_austen.append(gen.gen_random_sent(N, unique_words_austen, unique_word_index_austen, MODEL_AUSTEN, 5))
             sentences_carroll.append(gen.gen_random_sent(N, unique_words_carroll, unique_word_index_carroll, MODEL_CARROLL, 5))
 
-        models = {'Jane Austen - \'Emma\'': MODEL_AUSTEN, 'Lewis Carroll - \'Alice in Wonderland\'': MODEL_CARROLL}
+        models = {'austen': MODEL_AUSTEN, 'carroll': MODEL_CARROLL}
         unique_word_indices = [unique_word_index_austen, unique_word_index_carroll]
         austen_best_model = []
         carroll_best_model = []
@@ -90,8 +90,8 @@ def generate():
             carroll_best_model.append(m)
             carroll_best_probs.append(p)
 
-        gen.print_sentences(sentences_austen, 'austen',  austen_best_model, austen_best_probs)
-        gen.print_sentences(sentences_carroll, 'carroll', carroll_best_model, carroll_best_probs)
+        gen.print_sentences(sentences_austen, 'Jane Austen - \'Emma\'',  austen_best_model, austen_best_probs)
+        gen.print_sentences(sentences_carroll, 'Lewis Carroll - \'Alice in Wonderland\'', carroll_best_model, carroll_best_probs)
     else:
         text_austen = pre.extract_text_gutenberg('austen-emma.txt')
         ngrams_austen = pre.extract_characters(text_austen, N)
@@ -114,7 +114,7 @@ def generate():
             sentences_carroll.append(
                 gen.gen_random_sent_from_characters(N, unique_words_carroll, unique_word_index_carroll, MODEL_CARROLL, 5))
 
-        models = {'Jane Austen - \'Emma\'': MODEL_AUSTEN, 'Lewis Carroll - \'Alice in Wonderland\'': MODEL_CARROLL}
+        models = {'austen': MODEL_AUSTEN, 'carroll': MODEL_CARROLL}
         unique_word_indices = [unique_word_index_austen, unique_word_index_carroll]
         austen_best_model = []
         carroll_best_model = []
@@ -130,8 +130,8 @@ def generate():
             carroll_best_model.append(m)
             carroll_best_probs.append(p)
 
-        gen.print_sentences(sentences_austen, 'austen', austen_best_model, austen_best_probs)
-        gen.print_sentences(sentences_carroll, 'carroll', carroll_best_model, carroll_best_probs)
+        gen.print_sentences(sentences_austen, 'Jane Austen - \'Emma\'', austen_best_model, austen_best_probs)
+        gen.print_sentences(sentences_carroll, 'Lewis Carroll - \'Alice in Wonderland\'', carroll_best_model, carroll_best_probs)
 
 
 def evaluate():

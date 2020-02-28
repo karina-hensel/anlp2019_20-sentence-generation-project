@@ -17,15 +17,15 @@ to add: video if terminal
 
 ## Files Description: 
 
-## Main.py 
+### Main.py 
 
 Main function to call
 
-## Preprocessing.py
+### Preprocessing.py
 
 Extract n-grams of different sizes from a corpus, format them and save relevant ressources to files
 
-## Resources: 
+### Resources: 
 
 1. Bible
 2. Shakespeare Hamlet
@@ -33,7 +33,7 @@ Extract n-grams of different sizes from a corpus, format them and save relevant 
 4. Blake poems
 5. Chesterton brown
 
-## Pretrained models (RNN)
+### Pretrained models (RNN)
 
 1. keras_next_char_model_austen.h10
    history_austen_char.p10

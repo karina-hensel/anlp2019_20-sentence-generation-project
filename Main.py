@@ -74,7 +74,7 @@ def generate():
             sentences_austen.append(gen.gen_random_sent(N, unique_words_austen, unique_word_index_austen, MODEL_AUSTEN, 5))
             sentences_carroll.append(gen.gen_random_sent(N, unique_words_carroll, unique_word_index_carroll, MODEL_CARROLL, 5))
 
-        models = {'austen': MODEL_AUSTEN, 'carroll': MODEL_CARROLL}
+        models = {'Jane Austen - \'Emma\'': MODEL_AUSTEN, 'Lewis Carroll - \'Alice in Wonderland\'': MODEL_CARROLL}
         unique_word_indices = [unique_word_index_austen, unique_word_index_carroll]
         austen_best_model = []
         carroll_best_model = []
@@ -114,7 +114,7 @@ def generate():
             sentences_carroll.append(
                 gen.gen_random_sent_from_characters(N, unique_words_carroll, unique_word_index_carroll, MODEL_CARROLL, 5))
 
-        models = {'austen': MODEL_AUSTEN, 'carroll': MODEL_CARROLL}
+        models = {'Jane Austen - \'Emma\'': MODEL_AUSTEN, 'Lewis Carroll - \'Alice in Wonderland\'': MODEL_CARROLL}
         unique_word_indices = [unique_word_index_austen, unique_word_index_carroll]
         austen_best_model = []
         carroll_best_model = []

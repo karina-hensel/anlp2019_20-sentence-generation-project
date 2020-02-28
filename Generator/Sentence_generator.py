@@ -199,7 +199,7 @@ def gen_random_sent_from_characters(n, unique_characters, unique_character_index
     # Select n random character from the vocabulary and build up a start character sequence
     start = ''
     for i in range(0, n):
-        ind = random.randint(0, len(unique_character_index))
+        ind = random.randint(0, len(unique_character_index)-1)
         start += unique_characters[ind]
     text = start
     sentence = [text]

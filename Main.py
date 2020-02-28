@@ -1,6 +1,8 @@
-'''Main program to evaluate and text the neural network.
+"""
+Main program to evaluate and text the neural network.
 Generate sentences from selected models or get evaluation results
-for a selected context / ngram size'''
+for a selected context / ngram size
+"""
 import argparse
 import pickle
 
@@ -26,6 +28,7 @@ N = args.N
 
 def load_models(selected_context_size):
     """Loads models for selected context window / word length
+    
     :param selected_context_size: selected word length
     :returns both models for the context size"""
 
@@ -36,8 +39,8 @@ def load_models(selected_context_size):
         model_austen = load_model('RNN/keras_next_word_model_austen.h1')
         model_carroll = load_model('RNN/keras_next_word_model_carroll.h1')
     elif selected_context_size == 2:
-        model_austen = load_model('RNN/keras_next_word_model_austen.h2')
-        model_carroll = load_model('RNN/keras_next_word_model_carroll.h2')
+        model_austen = load_model('RNN/test2.h2')
+        model_carroll = load_model('RNN/test.h2')
     elif selected_context_size == 5:
         model_austen = load_model('RNN/keras_next_word_model_austen.h5')
         model_carroll = load_model('RNN/keras_next_word_model_carroll.h5')
@@ -48,7 +51,9 @@ def load_models(selected_context_size):
     return(model_austen, model_carroll)
 
 def generate():
-    """Generate 5 random sentences"""
+    """Generate 5 random sentences for both corpora. Default are the character-based models if
+    no ngram size is selected
+    """
     if N in [1, 2, 5]:
         text_austen = pre.extract_text_gutenberg('austen-emma.txt')
         ngrams_austen = pre.extract_ngrams(text_austen, N)
@@ -102,7 +107,7 @@ def generate():
         unique_word_index_carroll = ngrams_carroll['unique_characters_index']
         sentences_carroll = []
 
-        # Generate 5 random sentences of at most 5 words
+        # Generate 5 random sentences
         for i in range(6):
             sentences_austen.append(
                 gen.gen_random_sent_from_characters(N, unique_words_austen, unique_word_index_austen, MODEL_AUSTEN, 5))
@@ -165,34 +170,36 @@ def evaluate():
         hist_austen = pickle.load(open("RNN/history_austen_char.p10", "rb"))
         hist_carroll = pickle.load(open("RNN/history_carroll_char.p10" + str(N), "rb"))
 
+        # Plot training accuracy and loss values for 'Emma'
         plt.plot(hist_austen['acc'])
         plt.title('Training accuracy for character model trained on \'Emma\'')
         plt.ylabel('Accuracy')
         plt.xlabel('Epoch')
         plt.show()
 
-        # Plot training & validation loss values
         plt.plot(hist_austen['loss'])
         plt.title('Training loss for character model trained on \'Emma\'')
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
         plt.show()
 
+        # Plot training accuracy and loss values for 'Alice in Wonderland'
         plt.plot(hist_carroll['acc'])
         plt.title('Training accuracy for character model trained on \'Alice in Wonderland\'')
         plt.ylabel('Accuracy')
         plt.xlabel('Epoch')
         plt.show()
 
-        # Plot training & validation loss values
         plt.plot(hist_carroll['loss'])
         plt.title('Training loss for character model trained on \'Alice in Wonderland\'')
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
         plt.show()
 
+
 # Load models for selected ngram size
 MODEL_AUSTEN, MODEL_CARROLL = load_models(N)
+
 
 if MODE == 'Sentence generation':
     generate()

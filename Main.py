@@ -39,8 +39,8 @@ def load_models(selected_context_size):
         model_austen = load_model('RNN/keras_next_word_model_austen.h1')
         model_carroll = load_model('RNN/keras_next_word_model_carroll.h1')
     elif selected_context_size == 2:
-        model_austen = load_model('RNN/test2.h2')
-        model_carroll = load_model('RNN/test.h2')
+        model_austen = load_model('RNN/keras_next_word_model_austen.h2')
+        model_carroll = load_model('RNN/keras_next_word_model_carroll.h2')
     elif selected_context_size == 5:
         model_austen = load_model('RNN/keras_next_word_model_austen.h5')
         model_carroll = load_model('RNN/keras_next_word_model_carroll.h5')

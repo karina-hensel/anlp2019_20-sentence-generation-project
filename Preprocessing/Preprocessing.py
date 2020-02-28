@@ -1,5 +1,5 @@
 """
-Data preprocessing functions
+Data preprocessing functions.
 
 The script provides functions to load and preprocess Project Gutenberg text corpora from
 the nltk package and to extract ngrams and character sequences from raw text, such that they
@@ -29,7 +29,7 @@ def extract_text(corpus):
 
     :param corpus: path to input file
     :type corpus: str
-    :returns text as string
+    :returns: text as string
     :rtype: str"""
 
     # Read in text
@@ -44,7 +44,7 @@ def extract_text_gutenberg(corpus):
 
     :param corpus: file id as given in nltk documentation
     :type corpus: str
-    :returns preprocessed text
+    :returns: preprocessed text
     :rtype: str
     """
 
@@ -65,7 +65,7 @@ def extract_ngrams(text, n):
     :type text: str
     :param n: n-gram size
     :type n: int
-    :returns one-hot vectors for input ngrams and correct successive words,
+    :returns: one-hot vectors for input ngrams and correct successive words,
     a list of unique words, number of unique words, word-index mapping
     :rtype: dict
     """
@@ -197,7 +197,7 @@ def load_text(file):
 
     :param file: path to text file in Ressources directory
     :type file: str
-    :returns file content as one line string
+    :returns: file content as one line string
     :rtype: str"""
     f = open('../Ressources/' + file, 'r')
 

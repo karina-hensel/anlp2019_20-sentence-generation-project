@@ -1,4 +1,4 @@
-"""Several functions to generate sentences with a given model
+"""Several functions to generate sentences with a given model.
 
 This script provides several functions for generating sentences from a given
 model.

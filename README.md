@@ -21,6 +21,19 @@ to add: video if terminal
 
 Main function to call
 
+Includes RNN network. The network is pretrained for several corpuses and the models are saved and loaded.
+
+RNN arguments:
+
+
+ | |
+	|-------------|--------|
+	|`Optimizer`|ADAM
+	|`epochs`|number of epochs to train for (default: 10)|
+	|`l_r`|Learning rate (default: 0.001)|
+	|`activation function`|Softmax|
+	|`batch_size`|(default: 128)|
+
 ### Preprocessing.py
 
 Extract n-grams of different sizes from a corpus, format them and save relevant ressources to files

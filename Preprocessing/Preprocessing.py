@@ -1,4 +1,23 @@
-'''Extract n-grams of different sizes from a corpus, format them and save relevant ressources to files'''
+"""
+Data preprocessing functions
+
+The script provides functions to load and preprocess Project Gutenberg text corpora from
+the nltk package and to extract ngrams and character sequences from raw text, such that they
+can be used as input to a neural network.
+
+It requires nltk, numpy and pickle to be installed within the Python environment used to run
+this project.
+
+The script can be imported as a module and contains the following functions:
+
+    * extract_text - extract text from any text file
+    * extract_text_gutenberg - retrieve and preprocess Project Gutenberg corpora
+    * extract_ngrams - extract ngrams from string
+    * extract_characters - extract character sequences from string
+    * save_to_file - save preprocessed Project Gutenberg text
+    * load_text - load input from a text file
+"""
+
 from nltk.corpus import gutenberg
 from nltk.tokenize import RegexpTokenizer
 import numpy as np
@@ -6,9 +25,12 @@ from pickle import dump
 
 
 def extract_text(corpus):
-    '''Extract text from a file as a string
-    :param corpus: input .txt file
-    :returns text as string'''
+    """Extract text from a file as a string
+
+    :param corpus: path to input file
+    :type corpus: str
+    :returns text as string
+    :rtype: str"""
 
     # Read in text
     text = ''
@@ -18,9 +40,13 @@ def extract_text(corpus):
     return text.replace('.', '. <end>')
 
 def extract_text_gutenberg(corpus):
-    '''Extract text via nltk
-    :param corpus: file id
-    :returns text as string'''
+    """Extract text via nltk
+
+    :param corpus: file id as given in nltk documentation
+    :type corpus: str
+    :returns preprocessed text
+    :rtype: str
+    """
 
     text = gutenberg.raw(corpus)[:100000].replace('. ', ' . <end> ')
     text = text.replace('? ', ' ? <end> ')
@@ -32,11 +58,17 @@ def extract_text_gutenberg(corpus):
 
 
 def extract_ngrams(text, n):
-    '''Extract n-grams
-    :param text: text as string
+    """Extract n-grams and successive words to be used for training the RNN and for
+    prediction
+
+    :param text: text
+    :type text: str
     :param n: n-gram size
-    :returns dictionary with one-hot vectors for input ngrams and correct successive words,
-    a list of unique words, number of unique words, word-index mapping'''
+    :type n: int
+    :returns one-hot vectors for input ngrams and correct successive words,
+    a list of unique words, number of unique words, word-index mapping
+    :rtype: dict
+    """
 
     # Dictionary to return
     ngrams_info = dict.fromkeys(['X', 'Y', 'vocab_len', 'tokenizer'])
@@ -48,7 +80,6 @@ def extract_ngrams(text, n):
 
     unique_words = np.unique(words)
     unique_word_index = dict((c, i) for i, c in enumerate(unique_words))
-    unique_word_index['UNK'] = len(unique_word_index)
 
     WORD_LENGTH = n
     prev_words = []
@@ -61,7 +92,7 @@ def extract_ngrams(text, n):
 
     # One hot encoding of ngram sequences and successive words
     X = np.zeros((len(prev_words), WORD_LENGTH, len(unique_words)), dtype=bool)
-    Y = np.zeros((len(next_words), len(unique_words)+1), dtype=bool)
+    Y = np.zeros((len(next_words), len(unique_words)), dtype=bool)
 
     for i, each_words in enumerate(prev_words):
         for j, each_word in enumerate(each_words):
@@ -77,11 +108,17 @@ def extract_ngrams(text, n):
     return  ngrams_info
 
 def extract_characters(text, seq_len):
-    '''Extract character sequences
+    """Extract character sequences and successive characters used
+    for training and prediction in the character-based RNN
+
     :param text: text as string
+    :type text: str
     :param seq_len: length of the character sequences which is used to predict the following character
-    :returns dictionary with one-hot encoded character input sequences and correct successive character,
-    a list of unique characters, number of unique characters, character-index mapping'''
+    :type seq_len: int
+    :returns one-hot encoded character input sequences and correct successive character,
+    a list of unique characters, number of unique characters, character-index mapping
+    :rtype: dict
+    """
 
     # Dictionary to return
     char_info = dict.fromkeys(['X', 'Y', 'unique_characters', 'len_unique_characters', 'unique_characters_index'])
@@ -94,6 +131,7 @@ def extract_characters(text, seq_len):
     SEQUENCE_LENGTH = seq_len
     prev_characters = []
     unique_characters = list(set(list(text)))
+    unique_characters.append('UNK')
     next_characters = []
 
 
@@ -102,11 +140,6 @@ def extract_characters(text, seq_len):
         next_characters.append(text[i + 1])
 
     unique_character_index = dict((c, i) for i, c in enumerate(unique_characters))
-    unique_character_index['UNK'] = len(unique_character_index)
-
-    # feature engineering: number of previous characters that determines the next character
-    for i in range(0,len(prev_characters) - 1):
-        prev_characters.append(prev_characters[i])
 
     # One hot encoding of character sequences and successive character
     X = np.zeros((len(prev_characters), SEQUENCE_LENGTH, len(unique_characters)), dtype=bool)
@@ -128,11 +161,16 @@ def extract_characters(text, seq_len):
 
 
 def save_to_file(corpus, sequences, mapping):
-    '''Preprocess corpus: save first 1000 lines, 10 character sequences
+    """Save first 1000 lines, 10-character sequences
     and character-index mappings to separate files
+
     :param corpus: piece of text
+    :type corpus: str
     :param sequences: character sequences
-    :param mapping: character-index dictionary'''
+    :type sequences: list
+    :param mapping: character-to-index mapping
+    :type mapping: dict
+    """
 
     # Extract first 1000 lines from a text file
     text = extract_text_gutenberg(corpus + '.txt')
@@ -155,33 +193,12 @@ def save_to_file(corpus, sequences, mapping):
     dump(mapping, open('../Ressources/' + corpus + '-char-to-ind.pkl', 'wb'))
 
 def load_text(file):
-    '''Load the contents of a preprocessed corpus
-    :param file: text file in Ressources directory
-    :returns string representation of file content'''
+    """Load the contents of a preprocessed corpus
+
+    :param file: path to text file in Ressources directory
+    :type file: str
+    :returns file content as one line string
+    :rtype: str"""
     f = open('../Ressources/' + file, 'r')
 
     return " ".join(f.readlines()).replace('\n', '')
-
-
-if __name__ == '__main__':
-    # Preprocess five corpora
-
-    austen_emma = extract_characters(extract_text_gutenberg('austen-emma.txt'), 10)
-    save_to_file('austen-emma', 1, 10)#austen_emma['sequences'], austen_emma['char_index'])
-
-    #bible = extract_characters(extract_text_gutenberg('bible-kjv.txt'), 10)
-    #save_to_file('bible-kjv', bible['sequences'], bible['char_index'])
-
-    #shakespeare_hamlet = extract_characters(extract_text_gutenberg('shakespeare-hamlet.txt'), 10)
-    #save_to_file('shakespeare-hamlet', shakespeare_hamlet['sequences'], shakespeare_hamlet['char_index'])
-
-    #carroll_alice = extract_characters(extract_text_gutenberg('carroll-alice.txt'), 10)
-    #save_to_file('carroll-alice', carroll_alice['sequences'], carroll_alice['char_index'])
-
-    #blake_poems = extract_characters(extract_text_gutenberg('blake-poems.txt'), 10)
-    #save_to_file('blake-poems', blake_poems['sequences'], blake_poems['char_index'])
-
-    #chesterton_brown = extract_characters(extract_text_gutenberg('chesterton-brown.txt'), 10)
-    #save_to_file('chesterton-brown', chesterton_brown['sequences'], chesterton_brown['char_index'])
-    #print(load_text('chesterton-brown.txt'))
-    #print(chesterton_brown)

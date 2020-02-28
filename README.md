@@ -1,7 +1,29 @@
-# anlp2019-project
+## Generating English Sentences Using LSTMs.
 
-## Main.py --> Main function to call
-## Preprocessing.py ---> Extract n-grams of different sizes from a corpus, format them and save relevant ressources to files
+Through the use of Long Short-Term Memory (LSTM) Networks, we aim to predict a word deoending on the n previous words of the sentence. to achieve this, each corpus is transformed into word vectors....Karina
+
+
+to add: video if terminal 
+
+## Running the Code
+
+### Dependencies
+
+* `Python 3.6.1`
+* `Tensorflow 1.3.0`
+* `Keras 2.1.2`
+* `matplotlib 2.0.2`
+* `numpy 1.12.1`
+
+## Files Description: 
+
+## Main.py 
+
+Main function to call
+
+## Preprocessing.py
+
+Extract n-grams of different sizes from a corpus, format them and save relevant ressources to files
 
 ## Resources: 
 

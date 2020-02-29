@@ -205,29 +205,37 @@ def evaluate():
         hist_carroll = pickle.load(open("RNN/history_carroll.p" + str(N), "rb"))
 
         plt.plot(hist_austen['acc'])
-        plt.title('Training accuracy for ' + str(N) + '-gram model trained on \'Emma\'')
+        plt.plot(hist_austen['val_acc'])
+        plt.title('Training and validation accuracy for ' + str(N) + '-gram model trained on \'Emma\'')
         plt.ylabel('Accuracy')
         plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
         plt.show()
 
         # Plot training & validation loss values
         plt.plot(hist_austen['loss'])
-        plt.title('Training loss for ' + str(N) + '-gram model trained on \'Emma\'')
+        plt.plot(hist_austen['val_loss'])
+        plt.title('Training and validation loss for ' + str(N) + '-gram model trained on \'Emma\'')
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
-        plt.show()
-
-        plt.plot(hist_carroll['acc'])
-        plt.title('Training accuracy for ' + str(N) + '-gram model trained on \'Alice in Wonderland\'')
-        plt.ylabel('Accuracy')
-        plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
         plt.show()
 
         # Plot training & validation loss values
+        plt.plot(hist_carroll['acc'])
+        plt.plot(hist_carroll['val_acc'])
+        plt.title('Training and validation accuracy for ' + str(N) + '-gram model trained on \'Alice in Wonderland\'')
+        plt.ylabel('Accuracy')
+        plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
+        plt.show()
+
         plt.plot(hist_carroll['loss'])
-        plt.title('Training loss for ' + str(N) + '-gram model trained on \'Alice in Wonderland\'')
+        plt.plot(hist_carroll['val_loss'])
+        plt.title('Training and validation loss for ' + str(N) + '-gram model trained on \'Alice in Wonderland\'')
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
         plt.show()
     else:
         hist_austen = pickle.load(open("RNN/history_austen_char.p10", "rb"))
@@ -235,28 +243,36 @@ def evaluate():
 
         # Plot training accuracy and loss values for 'Emma'
         plt.plot(hist_austen['acc'])
-        plt.title('Training accuracy for character model trained on \'Emma\'')
+        plt.plot(hist_austen['val_acc'])
+        plt.title('Training and validation accuracy for character model trained on \'Emma\'')
         plt.ylabel('Accuracy')
         plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
         plt.show()
 
         plt.plot(hist_austen['loss'])
-        plt.title('Training loss for character model trained on \'Emma\'')
+        plt.plot(hist_austen['val_loss'])
+        plt.title('Training and validation loss for character model trained on \'Emma\'')
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
         plt.show()
 
         # Plot training accuracy and loss values for 'Alice in Wonderland'
         plt.plot(hist_carroll['acc'])
-        plt.title('Training accuracy for character model trained on \'Alice in Wonderland\'')
+        plt.plot(hist_carroll['val_acc'])
+        plt.title('Training and validation accuracy for character model trained on \'Alice in Wonderland\'')
         plt.ylabel('Accuracy')
         plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
         plt.show()
 
         plt.plot(hist_carroll['loss'])
-        plt.title('Training loss for character model trained on \'Alice in Wonderland\'')
+        plt.plot(hist_carroll['val_loss'])
+        plt.title('Training and validation loss for character model trained on \'Alice in Wonderland\'')
         plt.ylabel('Loss')
         plt.xlabel('Epoch')
+        plt.legend(['Train', 'Test'], loc='upper left')
         plt.show()
 
 

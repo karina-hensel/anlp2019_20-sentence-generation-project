@@ -47,7 +47,6 @@ Includes RNN network. The network is pretrained for several corpuses and the mod
 RNN arguments:
 
 
- | | |
 	|-------------|--------|
 	|`Optimizer`|ADAM|
 	|`epochs`|number of epochs to train for (default: 10)|

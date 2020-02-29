@@ -47,15 +47,14 @@ Includes RNN network. The network is pretrained for several corpuses and the mod
 RNN arguments:
 
 
- | |
+ | | |
 	|-------------|--------|
-	|`Optimizer`|ADAM
+	|`Optimizer`|ADAM|
 	|`epochs`|number of epochs to train for (default: 10)|
 	|`l_r`|Learning rate (default: 0.001)|
 	|`activation function`|Softmax|
 	|`batch_size`|(default: 128)|
 	
-| |
 
 ### Preprocessing.py
 

@@ -40,20 +40,20 @@ To run the program in this mode type ```python3 Main.py 'evaluation' n```, where
 Main script to run the program as specified above. It loads both models for a selected input size and allows to evaluate them with regard to the 
 generated sentences or accuracy and loss.
 
-## RNN_final.py
+### RNN_final.py
 
 Includes RNN network. The network is pretrained for several corpuses and the models are saved and loaded.
 
 RNN arguments:
 
 
- | |
 	|-------------|--------|
-	|`Optimizer`|ADAM
+	|`Optimizer`|ADAM|
 	|`epochs`|number of epochs to train for (default: 10)|
 	|`l_r`|Learning rate (default: 0.001)|
 	|`activation function`|Softmax|
 	|`batch_size`|(default: 128)|
+	
 
 ### Preprocessing.py
 

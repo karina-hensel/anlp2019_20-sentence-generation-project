@@ -54,6 +54,8 @@ RNN arguments:
 	|`l_r`|Learning rate (default: 0.001)|
 	|`activation function`|Softmax|
 	|`batch_size`|(default: 128)|
+	
+| |
 
 ### Preprocessing.py
 

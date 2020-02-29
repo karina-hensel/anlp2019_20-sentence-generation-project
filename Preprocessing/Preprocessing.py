@@ -26,6 +26,7 @@ from pickle import dump
 
 def extract_text(corpus):
     """Extract text from a file as a string
+    (currently not used)
 
     :param corpus: path to input file
     :type corpus: str
@@ -40,7 +41,7 @@ def extract_text(corpus):
     return text.replace('.', '. <end>')
 
 def extract_text_gutenberg(corpus):
-    """Extract text via nltk
+    """Extract text via nltk (only retrieves part of the corpus)
 
     :param corpus: file id as given in nltk documentation
     :type corpus: str
@@ -109,7 +110,8 @@ def extract_ngrams(text, n):
 
 def extract_characters(text, seq_len):
     """Extract character sequences and successive characters used
-    for training and prediction in the character-based RNN
+    for training and prediction in the character-based RNN.
+    Still needs further improvement to produce better results.
 
     :param text: text as string
     :type text: str
@@ -163,6 +165,7 @@ def extract_characters(text, seq_len):
 def save_to_file(corpus, sequences, mapping):
     """Save first 1000 lines, 10-character sequences
     and character-index mappings to separate files
+    (deprecated)
 
     :param corpus: piece of text
     :type corpus: str
@@ -194,6 +197,7 @@ def save_to_file(corpus, sequences, mapping):
 
 def load_text(file):
     """Load the contents of a preprocessed corpus
+    (deprecated)
 
     :param file: path to text file in Ressources directory
     :type file: str

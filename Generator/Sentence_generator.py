@@ -43,8 +43,14 @@ def gen_sent(start, n, unique_words, unique_word_index, model, limit):
 
     WORD_LENGTH = n
 
-    # Helper functions to format some input sequence as one-hot vector
+
     def prepare_input(text):
+        """Helper function to format some input sequence as one-hot vector
+
+        :param text: input n-gram
+        :type text: str
+        :returns: one-hot encoding of input
+        :rtype: numpy array"""
         x = np.zeros((1, WORD_LENGTH, len(unique_words)))
         for t, word in enumerate(text.split()):
             if word in unique_word_index.keys():
@@ -53,9 +59,13 @@ def gen_sent(start, n, unique_words, unique_word_index, model, limit):
                 x[0, t, unique_word_index['UNK']] = 1
         return x
 
-    # Retrieve best n predictions for the next word from a probability
-    # distribution
     def sample(preds, top_n=3):
+        """Helper function to retrieve best n predictions for the next word
+        from a probability distribution
+
+        :param preds: probability distribution over all words
+        :type preds: numpy array
+        :returns: n words with highest probability"""
         preds = np.asarray(preds).astype('float64')
         preds = np.log(preds)
         exp_preds = np.exp(preds)
@@ -63,9 +73,16 @@ def gen_sent(start, n, unique_words, unique_word_index, model, limit):
 
         return heapq.nlargest(top_n, range(len(preds)), preds.take)
 
-    # Helper function to make predictions for the best next word in
-    # the sequence
     def predict_completions(text, n=1):
+        """ Helper function to make predictions for the best next word in
+        the sequence
+
+        :param text: input n-gram
+        :type text: str
+        :param n: number of best predictions to return
+        :type n: int
+        :returns: best next word
+        :rtype: str"""
         if text == "":
             return ("0")
         x = prepare_input(text)
@@ -106,6 +123,12 @@ def gen_random_sent(n, unique_words, unique_word_index, model, limit):
     WORD_LENGTH = n
 
     def prepare_input(text):
+        """Helper function to format some input sequence as one-hot vector
+
+        :param text: input n-gram
+        :type text: str
+        :returns: one-hot encoding of input
+        :rtype: numpy array"""
         x = np.zeros((1, WORD_LENGTH, len(unique_words)))
         for t, word in enumerate(text.split()):
             if word in unique_word_index.keys():
@@ -115,6 +138,12 @@ def gen_random_sent(n, unique_words, unique_word_index, model, limit):
         return x
 
     def sample(preds, top_n=3):
+        """Helper function to retrieve best n predictions for the next word
+        from a probability distribution
+
+        :param preds: probability distribution over all words
+        :type preds: numpy array
+        :returns: n words with highest probability"""
         preds = np.asarray(preds).astype('float64')
         preds = np.log(preds)
         exp_preds = np.exp(preds)
@@ -123,6 +152,15 @@ def gen_random_sent(n, unique_words, unique_word_index, model, limit):
         return heapq.nlargest(top_n, range(len(preds)), preds.take)
 
     def predict_completions(text, n=1):
+        """ Helper function to make predictions for the best next word in
+         the sequence
+
+         :param text: input n-gram
+         :type text: str
+         :param n: number of best predictions to return
+         :type n: int
+         :returns: best next word
+        :rtype: str"""
         if text == "":
             return ("0")
         x = prepare_input(text)
@@ -169,6 +207,12 @@ def gen_random_sent_from_characters(n, unique_characters, unique_character_index
     SEQUENCE_LENGTH = n
 
     def prepare_input(text):
+        """Helper function to format some input sequence as one-hot vector
+
+        :param text: input character sequence
+        :type text: str
+        :returns: one-hot encoding of input
+        :rtype: numpy array"""
         x = np.zeros((1, SEQUENCE_LENGTH, len(unique_characters)))
         for t, word in enumerate(text.split()):
             if word in unique_character_index.keys():
@@ -178,6 +222,12 @@ def gen_random_sent_from_characters(n, unique_characters, unique_character_index
         return x
 
     def sample(preds, top_n=3):
+        """Helper function to retrieve best n predictions for the next character
+         from a probability distribution
+
+          :param preds: probability distribution over all characters
+          :type preds: numpy array
+          :returns: n characters with highest probability"""
         preds = np.asarray(preds).astype('float64')
         preds = np.log(preds)
         exp_preds = np.exp(preds)
@@ -186,6 +236,15 @@ def gen_random_sent_from_characters(n, unique_characters, unique_character_index
         return heapq.nlargest(top_n, range(len(preds)), preds.take)
 
     def predict_completions(text, n=1):
+        """ Helper function to make predictions for the best next
+        character in the sequence
+
+         :param text: input n-gram
+         :type text: str
+         :param n: number of best predictions to return
+         :type n: int
+         :returns: best next word
+         :rtype: str"""
         if text == "":
             return ("0")
         x = prepare_input(text)
@@ -293,7 +352,7 @@ def print_sentences(sentences, author, pred_author, probs):
     """
 
     sentences = [' '.join(s) for s in sentences]
-    table = {'Sentence': sentences, 'Author': [author]*len(sentences), 'Predicted author': pred_author,
+    table = {'Sentence': sentences, 'Author': [author[:author.index('-')]]*len(sentences), 'Predicted author': pred_author,
              'Probability': probs}
     df = pandas.DataFrame(data=table)
 

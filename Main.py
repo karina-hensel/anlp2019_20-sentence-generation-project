@@ -1,7 +1,17 @@
 """
 Main program to evaluate and text the neural network.
+
 Generate sentences from selected models or get evaluation results
-for a selected context / ngram size
+for a selected context / n-gram size.
+
+It requires argparse, pickle, keras and matplotlib to be installed within
+the Python environment used to run this project.
+
+The script contains the following functions:
+
+    * load_models - loads the models for a selected n-gram size
+    * generate - generate random sentences with the loaded models
+    * evaluate - plot training accuracy and loss
 """
 import argparse
 import pickle
@@ -14,23 +24,26 @@ import matplotlib.pyplot as plt
 # Add arguments
 parser = argparse.ArgumentParser(description='A program to run and evaluate the sentence generator')
 parser.add_argument('Mode', metavar="program mode",
-                    choices=['Evaluation', 'Sentence generation'],
+                    choices=['evaluation', 'sentence generation - random', 'sentence generation - start'],
                     type=str, help="Select whether to evaluate the models or whether to generate sentences")
 parser.add_argument('N', metavar="n-gram size",
                     choices=[1, 2, 5, 10],
                     type=int, help="Select for which context / ngram-size to run / evaluate the models")
+parser.add_argument('Start', type=str, help="Chose a start word / word sequence to generate a sentence")
 
 args = parser.parse_args()
 
-# Retrieve selected ngram size
+# Retrieve user input
 MODE = args.Mode
 N = args.N
+START = args.Start
 
 def load_models(selected_context_size):
     """Loads models for selected context window / word length
     
     :param selected_context_size: selected word length
-    :returns both models for the context size"""
+    :returns: both models for the context size
+    """
 
     model_austen = None
     model_carroll = None
@@ -50,9 +63,9 @@ def load_models(selected_context_size):
 
     return(model_austen, model_carroll)
 
-def generate():
+def generate_random():
     """Generate 5 random sentences for both corpora. Default are the character-based models if
-    no ngram size is selected
+    no n-gram size is selected
     """
     if N in [1, 2, 5]:
         text_austen = pre.extract_text_gutenberg('austen-emma.txt')
@@ -114,7 +127,7 @@ def generate():
             sentences_carroll.append(
                 gen.gen_random_sent_from_characters(N, unique_words_carroll, unique_word_index_carroll, MODEL_CARROLL, 5))
 
-        models = {'austen': MODEL_AUSTEN, 'carroll': MODEL_CARROLL}
+        models = {'Austen': MODEL_AUSTEN, 'Carroll': MODEL_CARROLL}
         unique_word_indices = [unique_word_index_austen, unique_word_index_carroll]
         austen_best_model = []
         carroll_best_model = []
@@ -131,7 +144,54 @@ def generate():
             carroll_best_probs.append(p)
 
         gen.print_sentences(sentences_austen, 'Jane Austen - \'Emma\'', austen_best_model, austen_best_probs)
+        print()
         gen.print_sentences(sentences_carroll, 'Lewis Carroll - \'Alice in Wonderland\'', carroll_best_model, carroll_best_probs)
+
+def generate_start():
+    """Generate a sentence starting
+    with a given start token / n-gram
+    """
+    if N in [1, 2, 5]:
+        text_austen = pre.extract_text_gutenberg('austen-emma.txt')
+        ngrams_austen = pre.extract_ngrams(text_austen, N)
+        len_unique_words_austen = ngrams_austen['len_unique_words']
+        unique_words_austen = ngrams_austen['unique_words']
+        unique_word_index_austen = ngrams_austen['unique_word_index']
+        sentences_austen = []
+
+        text_carroll = pre.extract_text_gutenberg('carroll-alice.txt')
+        ngrams_carroll = pre.extract_ngrams(text_carroll, N)
+        len_unique_words_carroll = ngrams_carroll['len_unique_words']
+        unique_words_carroll = ngrams_carroll['unique_words']
+        unique_word_index_carroll = ngrams_carroll['unique_word_index']
+        sentences_carroll = []
+
+        # Generate 1 sentence from each model starting with the given start input
+        sentences_austen.append(gen.gen_sent(START, N, unique_words_austen, unique_word_index_austen, MODEL_AUSTEN, 1))
+        sentences_carroll.append(gen.gen_sent(START, N, unique_words_carroll, unique_word_index_carroll, MODEL_CARROLL, 1))
+
+        models = {'Austen': MODEL_AUSTEN, 'Carroll': MODEL_CARROLL}
+        unique_word_indices = [unique_word_index_austen, unique_word_index_carroll]
+        austen_best_model = []
+        carroll_best_model = []
+        austen_best_probs = []
+        carroll_best_probs = []
+
+        for s in sentences_austen:
+            m, p = gen.assign_author(s, models, unique_word_indices, N)
+            austen_best_model.append(m)
+            austen_best_probs.append(p)
+        for s in sentences_carroll:
+            m, p = gen.assign_author(s, models, unique_word_indices, N)
+            carroll_best_model.append(m)
+            carroll_best_probs.append(p)
+
+        gen.print_sentences(sentences_austen, 'Jane Austen - \'Emma\'',  austen_best_model, austen_best_probs)
+        print()
+        gen.print_sentences(sentences_carroll, 'Lewis Carroll - \'Alice in Wonderland\'', carroll_best_model, carroll_best_probs)
+    else:
+        print('Currently sentences can only be generated from a chosen start word (sequence), not characters. Please '
+              'select a word.')
 
 
 def evaluate():
@@ -200,8 +260,10 @@ def evaluate():
 # Load models for selected ngram size
 MODEL_AUSTEN, MODEL_CARROLL = load_models(N)
 
-
-if MODE == 'Sentence generation':
-    generate()
+# Run the script in the chosen mode
+if MODE.lower() == 'sentence generation - random':
+    generate_random()
+elif MODE.lower() == 'sentence generation - start':
+    generate_start()
 else:
     evaluate()

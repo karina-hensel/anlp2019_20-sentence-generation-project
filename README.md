@@ -21,7 +21,7 @@ where ```n``` is 1, 2, or 5 for the available ngram models and 10 for the charac
 where ```n``` is 1, 2, or 5 for the available ngram models (this option is not available for the character-based model) 
 and provide a start sequence (enclosed in single quotes).
 
-- <b>Evaluation mode:</b> This is the default mode, which generates plots of training accuracy and loss for the models of a selected ngram size. 
+- <b>Evaluation mode:</b> This is the default mode, which generates plots of training and validation accuracy and loss for the models of a selected ngram size. 
 To run the program in this mode type ```python3 Main.py 'evaluation' n```, where ```n``` can have one of the values as specified above.
 
 ### Dependencies

@@ -1,9 +1,9 @@
 ## Generating English Sentences Using LSTMs.
 
 Through the use of Long Short-Term Memory (LSTM) Networks, we aim to predict a word depending on the n previous words of the sentence. 
-To achieve this, each corpus is transformed into one-hot encoded sequences of ngrams or characters. After loading a pre-trained model, it 
-generates a probability distribution over next words / characters following a ngram / character sequence. The token / character with the
- highest probability is then added to the sentence.
+To achieve this, each corpus is transformed into one-hot encoded sequences of n-grams or characters. After loading a pre-trained model, it 
+generates a probability distribution over next words / characters following a n-gram / character sequence. The token / character with the
+ highest probability is then appended to the sentence.
  The LSTM has been trained on two books: 'Emma' by Jane Austen and 'Alice in Wonderland' by Lewis Carroll.
 
 ## Running the Code
@@ -12,12 +12,17 @@ To run the code open the terminal in the project directory where the Main.py scr
 
 There are two modes available to run the project.
 
-- <b>Sentence generation mode:</b> To generate random sentences and see which model assigns the highest probability to each of them, type 
-```python3 Main.py 'Sentence generation' n```
+- <b>Sentence generation mode:</b> 
+    - To generate random sentences and see which model assigns the highest probability to each of them, type 
+```python3 Main.py 'sentence generation - random' n RANDOM```
 where ```n``` is 1, 2, or 5 for the available ngram models and 10 for the character-based model.
+    - To generate a sentence from a given start n-gram , type 
+```python3 Main.py 'sentence generation - start' n <start-sequence>```
+where ```n``` is 1, 2, or 5 for the available ngram models (this option is not available for the character-based model) 
+and provide a start sequence (enclosed in single quotes).
 
 - <b>Evaluation mode:</b> This is the default mode, which generates plots of training accuracy and loss for the models of a selected ngram size. 
-To run the program in this mode type ```python3 Main.py 'Evaluation' n```, where ```n``` can have one of the values as specified above.
+To run the program in this mode type ```python3 Main.py 'evaluation' n```, where ```n``` can have one of the values as specified above.
 
 ### Dependencies
 
@@ -56,7 +61,7 @@ Extract n-grams of different sizes from a corpus and format them, such that they
  in an RNN.
  
  ### Sentence_generator.py
- Functions to generate sentences from ngram or character-based (not optimized in the current version of the project) models.
+ Functions to generate sentences from n-gram or character-based (not optimized in the current version of the project) models.
 
 ### Pretrained models (RNN)
 

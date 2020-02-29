@@ -29,14 +29,17 @@ parser.add_argument('Mode', metavar="program mode",
 parser.add_argument('N', metavar="n-gram size",
                     choices=[1, 2, 5, 10],
                     type=int, help="Select for which context / ngram-size to run / evaluate the models")
-parser.add_argument('Start', type=str, help="Chose a start word / word sequence to generate a sentence")
+parser.add_argument('--start', default=' ', help="Chose a start word / word sequence to generate a sentence")
 
 args = parser.parse_args()
 
 # Retrieve user input
 MODE = args.Mode
 N = args.N
-START = args.Start
+if args.start != ' ':
+    START = args.start
+else:
+    START = ' '
 
 def load_models(selected_context_size):
     """Loads models for selected context window / word length

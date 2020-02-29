@@ -14,12 +14,12 @@ There are two modes available to run the project.
 
 - <b>Sentence generation mode:</b> 
     - To generate random sentences and see which model assigns the highest probability to each of them, type 
-```python3 Main.py 'sentence generation - random' n RANDOM```
+```python3 Main.py 'sentence generation - random' n```
 where ```n``` is 1, 2, or 5 for the available ngram models and 10 for the character-based model.
     - To generate a sentence from a given start n-gram , type 
-```python3 Main.py 'sentence generation - start' n <start-sequence>```
+```python3 Main.py 'sentence generation - start' --start <start-sequence>```
 where ```n``` is 1, 2, or 5 for the available ngram models (this option is not available for the character-based model) 
-and provide a start sequence (enclosed in single quotes).
+and provide a start sequence.
 
 - <b>Evaluation mode:</b> This is the default mode, which generates plots of training accuracy and loss for the models of a selected ngram size. 
 To run the program in this mode type ```python3 Main.py 'evaluation' n```, where ```n``` can have one of the values as specified above.

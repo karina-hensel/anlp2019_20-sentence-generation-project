@@ -239,7 +239,7 @@ def evaluate():
         plt.show()
     else:
         hist_austen = pickle.load(open("RNN/history_austen_char.p10", "rb"))
-        hist_carroll = pickle.load(open("RNN/history_carroll_char.p10" + str(N), "rb"))
+        hist_carroll = pickle.load(open("RNN/history_carroll_char.p10", "rb"))
 
         # Plot training accuracy and loss values for 'Emma'
         plt.plot(hist_austen['acc'])
